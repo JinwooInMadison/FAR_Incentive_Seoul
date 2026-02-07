@@ -2,27 +2,20 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>용적률 완화(FAR) 분석 지도</title>
 
-  <!-- 네이버 지도 SDK (반드시 먼저) -->
-  <script src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=105hwwmu52&submodules=panorama,geocoder"></script>
+  <!-- 네이버 지도 SDK -->
+  <script src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=105hwwmu52&submodules=cadastral"></script>
 
   <style>
-    body, html {
+    html, body {
       margin: 0;
       padding: 0;
       height: 100%;
     }
     #map {
       width: 100%;
-      height: 100vh;
-    }
-    .info-window {
-      padding: 10px;
-      min-width: 150px;
-      line-height: 1.5;
-      font-family: sans-serif;
+      height: 100%;
     }
   </style>
 </head>
@@ -31,41 +24,18 @@
   <div id="map"></div>
 
   <script>
-    var map;
+    const map = new naver.maps.Map('map', {
+      center: new naver.maps.LatLng(37.5665, 126.9780),
+      zoom: 16,
+      mapTypeControl: true
+    });
 
-    function initMap() {
-      map = new naver.maps.Map("map", {
-        center: new naver.maps.LatLng(37.5665, 126.9780),
-        zoom: 16,
-        mapTypeControl: true
-      });
+    new naver.maps.CadastralLayer().setMap(map);
 
-      // 지적도 레이어
-      var cadastralLayer = new naver.maps.CadastralLayer();
-      cadastralLayer.setMap(map);
-
-      // 마커
-      var marker = new naver.maps.Marker({
-        position: new naver.maps.LatLng(37.4765, 126.9816),
-        map: map,
-        title: "연구 대상 필지"
-      });
-
-      // 정보창
-      var infowindow = new naver.maps.InfoWindow({
-        content:
-          '<div class="info-window">' +
-          '<h4>용적률 완화 분석</h4>' +
-          '<p>대상지: 남현동 602-25<br>코리빙 개발 검토 중</p>' +
-          "</div>"
-      });
-
-      naver.maps.Event.addListener(marker, "click", function () {
-        infowindow.open(map, marker);
-      });
-    }
-
-    window.onload = initMap;
+    const marker = new naver.maps.Marker({
+      position: new naver.maps.LatLng(37.4765, 126.9816),
+      map: map
+    });
   </script>
 </body>
 </html>
