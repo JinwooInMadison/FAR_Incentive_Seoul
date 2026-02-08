@@ -10,7 +10,7 @@ function initMap() {
             cadastralLayer.setMap(map);
 
             // 3. [교체] 스타일 선언 및 데이터 주입 (비동기 방식)
-            // 스타일을 먼저 설정해두면 데이터가 들어오는 즉시 화면에 그려집니다.
+            // 스타일을 미리 설정해두면 데이터가 로드되는 즉시 화면에 나타납니다.
             map.data.setStyle(function(feature) {
                 return {
                     fillColor: '#ff5722',
@@ -21,14 +21,14 @@ function initMap() {
                 };
             });
 
-            // fetch를 통해 GitHub에 올린 파일을 직접 가져옵니다.
+            // fetch를 통해 저장소에 올린 파일을 직접 가져옵니다.
             fetch('./Seoul_Planning_68.geojson')
                 .then(function(response) {
                     if (!response.ok) throw new Error('파일 로드 실패: ' + response.status);
                     return response.json();
                 })
                 .then(function(json) {
-                    // 데이터 레이어에 강제로 주입 (TypeError 방지 핵심)
+                    // 받아온 데이터를 지도 데이터 레이어에 주입 (TypeError 방지 핵심)
                     map.data.addGeoJson(json);
                     console.log("데이터 주입 성공: 율곡로, 사당, 청량리 포함");
                 })
@@ -36,11 +36,12 @@ function initMap() {
                     console.error("데이터 로딩 중 에러 발생:", error);
                 });
 
-            // 4. 클릭 이벤트 및 마커 (기존과 동일)
+            // 4. 클릭 이벤트 및 마커 (기존과 동일하게 유지)
             var infowindow = new naver.maps.InfoWindow({ content: '' });
 
             map.data.addListener('click', function(e) {
-                var districtName = e.feature.getProperty('DGM_NM');
+                var feature = e.feature;
+                var districtName = feature.getProperty('DGM_NM');
                 infowindow.setContent('<div style="padding:10px;"><b>' + districtName + '</b></div>');
                 infowindow.open(map, e.coord);
             });
