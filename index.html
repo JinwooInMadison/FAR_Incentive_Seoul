@@ -4,49 +4,26 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
-    <title>서울시 용적률 인센티브 대상지 지도</title>
+    <title>서울시 용적률 인센티브 지도</title>
     <style>
-        /* 화면 전체를 지도로 채우기 위한 설정 */
         body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: 'Malgun Gothic', sans-serif; }
         #map { width: 100%; height: 100vh; position: relative; z-index: 0; }
         
-        /* 주소 검색창 디자인 */
+        /* 주소 검색바 스타일 설정 */
         .search-container {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 100; /* 지도보다 위에 보이게 설정 */
-            background: white;
-            padding: 10px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            display: flex;
-            gap: 5px;
+            position: absolute; top: 20px; left: 20px; z-index: 100;
+            background: white; padding: 10px; border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2); display: flex; gap: 5px;
         }
-        #address-input {
-            width: 250px;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            outline: none;
-        }
-        #search-btn {
-            padding: 8px 15px;
-            background: #ff5722; /* 연구 구역과 맞춘 주황색 버튼 */
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        #search-btn:hover { background: #e64a19; }
+        #address-input { width: 250px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; outline: none; }
+        #search-btn { padding: 8px 15px; background: #ff5722; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
     </style>
     <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=105hwwmu52&submodules=cadastral,geocoder&callback=initMap"></script>
 </head>
 <body>
 
     <div class="search-container">
-        <input type="text" id="address-input" placeholder="주소를 입력하세요 (예: 효제동 69-4)">
+        <input type="text" id="address-input" placeholder="주소를 입력하세요 (예: 남현동 602-25)">
         <button id="search-btn">검색</button>
     </div>
 
@@ -57,107 +34,88 @@
         var infoWindow = null;
         var searchMarker = null;
 
+        // [함수] 지도 초기화 및 데이터 로드 시작
         function initMap() {
-            // 1. 지도 초기화 (서울 중심부 설정)
+            // 1. 지도 초기화: 지도의 중심점과 줌 레벨을 설정하여 지도를 생성합니다.
             map = new naver.maps.Map('map', {
-                center: new naver.maps.LatLng(37.541, 126.986), 
-                zoom: 11
+                center: new naver.maps.LatLng(37.541, 126.986), // 서울 중심부 좌표
+                zoom: 11 // 광역적으로 보이게 11레벨로 시작
             });
 
-            // 2. 지적편집도 레이어 추가 (필지 구분을 위한 필수 기능)
+            // 2. 지적편집도 레이어 추가: 토지 필지 경계선을 보여주는 레이어를 지도 위에 겹칩니다.
             var cadastralLayer = new naver.maps.CadastralLayer();
             cadastralLayer.setMap(map);
 
-            // 3. 지구단위계획구역 스타일 설정 (나도 좀 보자! 주석 포함)
+            // 3. 구역 스타일 설정: GeoJSON 데이터(68개 구역)를 어떤 색과 투명도로 그릴지 정합니다.
             map.data.setStyle(function(feature) {
                 return {
-                    fillColor: '#ff5722',   // 구역 내부 채우기 색상 (주황색)
-                    fillOpacity: 0.15,      // 투명도 (0.15로 설정하여 지적도 필지선이 잘 보이게 함)
-                    strokeColor: '#ff5722', // 구역 경계선 색상
-                    strokeWeight: 1.5,      // 경계선 두께
-                    strokeOpacity: 0.8,     // 경계선 투명도
-                    clickable: true         // 클릭 이벤트(이름 띄우기) 활성화
+                    fillColor: '#ff5722',   // 주황색 채우기
+                    fillOpacity: 0.15,      // 투명도 (0.15로 설정해 지적도가 잘 보이게 함)
+                    strokeColor: '#ff5722', // 테두리 주황색
+                    strokeWeight: 1.5,      // 테두리 두께
+                    clickable: true         // 마우스 클릭 이벤트 허용
                 };
             });
 
-            // 4. 추출한 68개 구역 GeoJSON 파일 불러오기
+            // 4. GeoJSON 데이터 주입: GitHub에 업로드한 68개 구역 파일을 비동기(fetch)로 가져옵니다.
             fetch('./Seoul_Planning_68.geojson')
-                .then(function(response) {
-                    if (!response.ok) throw new Error('파일을 찾을 수 없습니다.');
-                    return response.json();
+                .then(res => res.json())
+                .then(json => { 
+                    map.data.addGeoJson(json); 
+                    console.log("68개 구역 데이터 로드 완료");
                 })
-                .then(function(json) {
-                    map.data.addGeoJson(json);
-                    console.log("68개 연구 구역 데이터 주입 완료");
-                })
-                .catch(function(error) {
-                    console.error("데이터 로드 중 에러:", error);
-                });
+                .catch(err => console.error("데이터 로드 중 에러 발생:", err));
 
-            // 5. 정보창(말풍선) 초기화
+            // 5. 정보창 객체 생성: 구역 클릭 시 이름을 보여주기 위한 말풍선입니다.
             infoWindow = new naver.maps.InfoWindow({
                 content: '',
                 backgroundColor: "#fff",
                 borderColor: "#ff5722",
-                borderWidth: 2,
-                disableAnchor: true,
-                textAlign: "center",
-                margin: new naver.maps.Point(0, 10)
+                borderWidth: 2
             });
 
-            // 6. 구역 클릭 시 해당 구역의 이름 표시
+            // 6. 클릭 이벤트 리스너: 지도 위 주황색 구역을 클릭했을 때의 동작입니다.
             map.data.addListener('click', function(e) {
-                var feature = e.feature;
-                var districtName = feature.getProperty('DGM_NM'); // GeoJSON 내부의 구역명 속성
-                
-                var contentString = [
-                    '<div style="padding:10px; min-width:150px;">',
-                    '   <h4 style="margin:0 0 5px 0; color:#ff5722; font-size:14px;">대상 구역 정보</h4>',
-                    '   <p style="margin:0; font-size:13px;"><b>구역명:</b> ' + districtName + '</p>',
-                    '   <p style="font-size:11px; color:#666; margin-top:5px;">관광숙박 특화 인센티브 대상지</p>',
-                    '</div>'
-                ].join('');
-
-                infoWindow.setContent(contentString);
-                infoWindow.open(map, e.coord);
+                var name = e.feature.getProperty('DGM_NM'); // GeoJSON 데이터 내 'DGM_NM' 필드값 가져오기
+                infoWindow.setContent('<div style="padding:10px; font-size:13px;"><b>구역명:</b> ' + name + '</div>');
+                infoWindow.open(map, e.coord); // 클릭한 위치에 말풍선 열기
             });
 
-            // 7. 주소 검색 기능 구현
-function searchAddress() {
-    var address = document.getElementById('address-input').value;
-    if (!address) return alert('주소를 입력해주세요.');
+            // 7. 주소 검색 기능 함수: 입력한 주소를 좌표로 바꿔 지도 위치를 옮깁니다.
+            function searchAddress() {
+                var address = document.getElementById('address-input').value;
+                if (!address) return alert('주소를 입력해주세요.');
 
-    naver.maps.Service.geocode({ query: address }, function(status, response) {
-        if (status !== naver.maps.Service.Status.OK) return alert('검색 결과가 없습니다.');
+                // 네이버 지오코딩 서비스(geocode) 이용
+                naver.maps.Service.geocode({ query: address }, function(status, response) {
+                    if (status !== naver.maps.Service.Status.OK) return alert('검색 결과가 없습니다.');
 
-        var result = response.v2.addresses[0];
-        var coords = new naver.maps.LatLng(result.y, result.x);
+                    var result = response.v2.addresses[0]; // 검색 결과 첫 번째 항목
+                    var coords = new naver.maps.LatLng(result.y, result.x); // 좌표 생성
 
-        // 1. 기존에 찍혀있던 핀(Marker)이 있다면 지도로부터 제거
-        if (searchMarker) searchMarker.setMap(null);
-        
-        // 2. 검색한 좌표로 지도 중심 이동 및 확대
-        map.setCenter(coords);
-        map.setZoom(18); // 지번과 필지를 아주 자세히 보기 위해 레벨을 높임
-        
-        // 3. 핀(Marker) 객체 생성 및 지도에 표시
-        searchMarker = new naver.maps.Marker({
-            position: coords,
-            map: map,
-            animation: naver.maps.Animation.DROP // 핀이 위에서 툭 떨어지는 애니메이션
-        });
+                    // 이전 검색 핀(Marker)이 있다면 지도에서 지우기
+                    if (searchMarker) searchMarker.setMap(null);
+                    
+                    // 지도 중심을 검색 위치로 이동하고, 상세 확인을 위해 18레벨로 확대
+                    map.setCenter(coords);
+                    map.setZoom(18); 
 
-        /* [공부 포인트: 이 부분이 삭제되었습니다]
-           infoWindow.setContent(...); 
-           infoWindow.open(map, coords); 
-           -> 이 코드가 빠졌기 때문에 핀 위를 가리는 설명창이 더 이상 뜨지 않습니다.
-        */
-    });
-}
+                    // 검색 위치에 핀(Marker) 표시
+                    searchMarker = new naver.maps.Marker({
+                        position: coords,
+                        map: map,
+                        animation: naver.maps.Animation.DROP // 핀이 위에서 툭 떨어지는 효과
+                    });
+                    
+                    // [공부포인트] infoWindow.open 코드가 없으므로 핀 위를 가리는 설명창은 나타나지 않습니다.
+                });
+            }
 
-        // 네이버 인증 실패 시 알림
-        window.navermap_authFailure = function () {
-            alert("지도 인증에 실패했습니다. GitHub Pages의 URL 설정과 Client ID를 확인하세요.");
+            // [이벤트 연결] 검색 버튼 클릭 및 엔터키 입력 시 검색 함수 실행
+            document.getElementById('search-btn').addEventListener('click', searchAddress);
+            document.getElementById('address-input').addEventListener('keydown', function(e) {
+                if(e.keyCode === 13) searchAddress();
+            });
         }
     </script>
 </body>
