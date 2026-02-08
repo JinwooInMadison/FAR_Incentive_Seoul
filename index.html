@@ -4,84 +4,168 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
-    <title>용적률 인센티브 지도</title>
+    <title>서울시 용적률 인센티브 대상지 지도</title>
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
-        #map { width: 100%; height: 100vh; }
+        /* 화면 전체를 지도로 채우기 위한 설정 */
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: 'Malgun Gothic', sans-serif; }
+        #map { width: 100%; height: 100vh; position: relative; z-index: 0; }
+        
+        /* 주소 검색창 디자인 */
+        .search-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100; /* 지도보다 위에 보이게 설정 */
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            display: flex;
+            gap: 5px;
+        }
+        #address-input {
+            width: 250px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            outline: none;
+        }
+        #search-btn {
+            padding: 8px 15px;
+            background: #ff5722; /* 연구 구역과 맞춘 주황색 버튼 */
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        #search-btn:hover { background: #e64a19; }
     </style>
-    <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=105hwwmu52&submodules=cadastral&callback=initMap"></script>
+    <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=105hwwmu52&submodules=cadastral,geocoder&callback=initMap"></script>
 </head>
 <body>
+
+    <div class="search-container">
+        <input type="text" id="address-input" placeholder="주소를 입력하세요 (예: 남현동 602-25)">
+        <button id="search-btn">검색</button>
+    </div>
+
     <div id="map"></div>
 
     <script type="text/javascript">
         var map = null;
+        var infoWindow = null;
+        var searchMarker = null;
 
         function initMap() {
-            // 1. 지도 초기화
+            // 1. 지도 초기화 (서울 중심부 설정)
             map = new naver.maps.Map('map', {
                 center: new naver.maps.LatLng(37.541, 126.986), 
                 zoom: 11
             });
 
-            // 2. 지적편집도 레이어 추가
+            // 2. 지적편집도 레이어 추가 (필지 구분을 위한 필수 기능)
             var cadastralLayer = new naver.maps.CadastralLayer();
             cadastralLayer.setMap(map);
 
-            // 3. 스타일 설정 (데이터가 들어오는 즉시 적용되도록 미리 설정)
+            // 3. 지구단위계획구역 스타일 설정 (나도 좀 보자! 주석 포함)
             map.data.setStyle(function(feature) {
                 return {
-                    fillColor: '#ff5722',
-                    fillOpacity: 0.15,
-                    strokeColor: '#ff5722',
-                    strokeWeight: 2,
-                    clickable: true
+                    fillColor: '#ff5722',   // 구역 내부 채우기 색상 (주황색)
+                    fillOpacity: 0.15,      // 투명도 (0.15로 설정하여 지적도 필지선이 잘 보이게 함)
+                    strokeColor: '#ff5722', // 구역 경계선 색상
+                    strokeWeight: 1.5,      // 경계선 두께
+                    strokeOpacity: 0.8,     // 경계선 투명도
+                    clickable: true         // 클릭 이벤트(이름 띄우기) 활성화
                 };
             });
 
-            // 4. GitHub에 올린 GeoJSON 파일을 fetch로 로드 (TypeError 방지)
+            // 4. 추출한 68개 구역 GeoJSON 파일 불러오기
             fetch('./Seoul_Planning_68.geojson')
                 .then(function(response) {
-                    if (!response.ok) throw new Error('파일 로드 실패: ' + response.status);
+                    if (!response.ok) throw new Error('파일을 찾을 수 없습니다.');
                     return response.json();
                 })
                 .then(function(json) {
                     map.data.addGeoJson(json);
-                    console.log("데이터 주입 성공: 율곡로, 사당, 청량리 포함");
+                    console.log("68개 연구 구역 데이터 주입 완료");
                 })
                 .catch(function(error) {
-                    console.error("데이터 로딩 중 에러:", error);
+                    console.error("데이터 로드 중 에러:", error);
                 });
 
-            // 5. 클릭 정보창 및 이벤트 설정
-            var infowindow = new naver.maps.InfoWindow({ content: '' });
+            // 5. 정보창(말풍선) 초기화
+            infoWindow = new naver.maps.InfoWindow({
+                content: '',
+                backgroundColor: "#fff",
+                borderColor: "#ff5722",
+                borderWidth: 2,
+                disableAnchor: true,
+                textAlign: "center",
+                margin: new naver.maps.Point(0, 10)
+            });
 
+            // 6. 구역 클릭 시 해당 구역의 이름 표시
             map.data.addListener('click', function(e) {
                 var feature = e.feature;
-                var districtName = feature.getProperty('DGM_NM');
+                var districtName = feature.getProperty('DGM_NM'); // GeoJSON 내부의 구역명 속성
                 
                 var contentString = [
                     '<div style="padding:10px; min-width:150px;">',
-                    '   <h4 style="margin:0 0 5px 0; color:#ff5722;">지구단위계획구역</h4>',
-                    '   <p style="margin:0;"><b>이름:</b> ' + districtName + '</p>',
-                    '   <p style="font-size:11px; color:#666; margin-top:5px;">※ 관광숙박 특화 인센티브 대상</p>',
+                    '   <h4 style="margin:0 0 5px 0; color:#ff5722; font-size:14px;">대상 구역 정보</h4>',
+                    '   <p style="margin:0; font-size:13px;"><b>구역명:</b> ' + districtName + '</p>',
+                    '   <p style="font-size:11px; color:#666; margin-top:5px;">관광숙박 특화 인센티브 대상지</p>',
                     '</div>'
                 ].join('');
 
-                infowindow.setContent(contentString);
-                infowindow.open(map, e.coord);
+                infoWindow.setContent(contentString);
+                infoWindow.open(map, e.coord);
             });
 
-            // 6. 연구 대상지 마커
-            new naver.maps.Marker({
-                position: new naver.maps.LatLng(37.4765, 126.9816),
-                map: map,
-                title: "남현동 602-25"
+            // 7. 주소 검색 기능 구현
+            function searchAddress() {
+                var address = document.getElementById('address-input').value;
+                if (!address) {
+                    alert('주소를 입력해주세요.');
+                    return;
+                }
+
+                // 네이버 지오코딩 서비스 호출
+                naver.maps.Service.geocode({ query: address }, function(status, response) {
+                    if (status !== naver.maps.Service.Status.OK) {
+                        return alert('검색 결과가 없습니다. 정확한 주소를 입력해주세요.');
+                    }
+
+                    var result = response.v2.addresses[0];
+                    var coords = new naver.maps.LatLng(result.y, result.x);
+
+                    // 기존 검색 마커가 있다면 제거
+                    if (searchMarker) searchMarker.setMap(null);
+
+                    // 해당 주소로 이동 및 마커 표시
+                    map.setCenter(coords);
+                    map.setZoom(17); // 필지 단위까지 확대
+                    searchMarker = new naver.maps.Marker({
+                        position: coords,
+                        map: map,
+                        animation: naver.maps.Animation.DROP // 마커가 툭 떨어지는 효과
+                    });
+
+                    infoWindow.setContent('<div style="padding:10px; font-size:13px;"><b>검색 위치:</b><br>' + result.roadAddress + '</div>');
+                    infoWindow.open(map, coords);
+                });
+            }
+
+            // 검색 버튼 클릭 및 엔터키 이벤트 연결
+            document.getElementById('search-btn').addEventListener('click', searchAddress);
+            document.getElementById('address-input').addEventListener('keydown', function(e) {
+                if (e.keyCode === 13) searchAddress();
             });
         }
 
+        // 네이버 인증 실패 시 알림
         window.navermap_authFailure = function () {
-            alert("네이버 지도 인증 실패! Client ID와 서비스 URL을 확인하세요.");
+            alert("지도 인증에 실패했습니다. GitHub Pages의 URL 설정과 Client ID를 확인하세요.");
         }
     </script>
 </body>
