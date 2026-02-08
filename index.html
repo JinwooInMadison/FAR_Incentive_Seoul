@@ -23,7 +23,7 @@
 <body>
 
     <div class="search-container">
-        <input type="text" id="address-input" placeholder="주소를 입력하세요 (예: 남현동 602-25)">
+        <input type="text" id="address-input" placeholder="주소를 입력하세요 (예: 효제동 69-4)">
         <button id="search-btn">검색</button>
     </div>
 
@@ -39,7 +39,7 @@
             // 1. 지도 초기화: 지도의 중심점과 줌 레벨을 설정하여 지도를 생성합니다.
             map = new naver.maps.Map('map', {
                 center: new naver.maps.LatLng(37.541, 126.986), // 서울 중심부 좌표
-                zoom: 15 // 광역적으로 보이게 15레벨로 시작
+                zoom: 13 // 광역적으로 보이게 13레벨로 시작
             });
 
             // 2. 지적편집도 레이어 추가: 토지 필지 경계선을 보여주는 레이어를 지도 위에 겹칩니다.
