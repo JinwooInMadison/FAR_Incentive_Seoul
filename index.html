@@ -46,7 +46,7 @@
 <body>
 
     <div class="search-container">
-        <input type="text" id="address-input" placeholder="주소를 입력하세요 (예: 남현동 602-25)">
+        <input type="text" id="address-input" placeholder="주소를 입력하세요 (예: 효제동 69-4)">
         <button id="search-btn">검색</button>
     </div>
 
@@ -123,45 +123,37 @@
             });
 
             // 7. 주소 검색 기능 구현
-            function searchAddress() {
-                var address = document.getElementById('address-input').value;
-                if (!address) {
-                    alert('주소를 입력해주세요.');
-                    return;
-                }
+function searchAddress() {
+    var address = document.getElementById('address-input').value;
+    if (!address) return alert('주소를 입력해주세요.');
 
-                // 네이버 지오코딩 서비스 호출
-                naver.maps.Service.geocode({ query: address }, function(status, response) {
-                    if (status !== naver.maps.Service.Status.OK) {
-                        return alert('검색 결과가 없습니다. 정확한 주소를 입력해주세요.');
-                    }
+    naver.maps.Service.geocode({ query: address }, function(status, response) {
+        if (status !== naver.maps.Service.Status.OK) return alert('검색 결과가 없습니다.');
 
-                    var result = response.v2.addresses[0];
-                    var coords = new naver.maps.LatLng(result.y, result.x);
+        var result = response.v2.addresses[0];
+        var coords = new naver.maps.LatLng(result.y, result.x);
 
-                    // 기존 검색 마커가 있다면 제거
-                    if (searchMarker) searchMarker.setMap(null);
+        // 1. 기존에 찍혀있던 핀(Marker)이 있다면 지도로부터 제거
+        if (searchMarker) searchMarker.setMap(null);
+        
+        // 2. 검색한 좌표로 지도 중심 이동 및 확대
+        map.setCenter(coords);
+        map.setZoom(18); // 지번과 필지를 아주 자세히 보기 위해 레벨을 높임
+        
+        // 3. 핀(Marker) 객체 생성 및 지도에 표시
+        searchMarker = new naver.maps.Marker({
+            position: coords,
+            map: map,
+            animation: naver.maps.Animation.DROP // 핀이 위에서 툭 떨어지는 애니메이션
+        });
 
-                    // 해당 주소로 이동 및 마커 표시
-                    map.setCenter(coords);
-                    map.setZoom(17); // 필지 단위까지 확대
-                    searchMarker = new naver.maps.Marker({
-                        position: coords,
-                        map: map,
-                        animation: naver.maps.Animation.DROP // 마커가 툭 떨어지는 효과
-                    });
-
-                    infoWindow.setContent('<div style="padding:10px; font-size:13px;"><b>검색 위치:</b><br>' + result.roadAddress + '</div>');
-                    infoWindow.open(map, coords);
-                });
-            }
-
-            // 검색 버튼 클릭 및 엔터키 이벤트 연결
-            document.getElementById('search-btn').addEventListener('click', searchAddress);
-            document.getElementById('address-input').addEventListener('keydown', function(e) {
-                if (e.keyCode === 13) searchAddress();
-            });
-        }
+        /* [공부 포인트: 이 부분이 삭제되었습니다]
+           infoWindow.setContent(...); 
+           infoWindow.open(map, coords); 
+           -> 이 코드가 빠졌기 때문에 핀 위를 가리는 설명창이 더 이상 뜨지 않습니다.
+        */
+    });
+}
 
         // 네이버 인증 실패 시 알림
         window.navermap_authFailure = function () {
