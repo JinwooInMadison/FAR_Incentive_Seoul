@@ -28,6 +28,9 @@
             var cadastralLayer = new naver.maps.CadastralLayer();
             cadastralLayer.setMap(map);
 
+console.log("map.data 상태:", map.data);
+
+            
             // 3. 68개 지구단위계획구역 GeoJSON 로드
             // 같은 폴더에 파일이 있어야 합니다.
             map.data.loadGeoJson('./Seoul_Planning_68.geojson');
