@@ -18,26 +18,62 @@
         var map = null;
 
         function initMap() {
-            // 지도 초기화
+            // 1. 지도 초기화 (중심점을 68개 구역이 잘 보이는 광역 위치로 설정)
             map = new naver.maps.Map('map', {
-                center: new naver.maps.LatLng(37.5665, 126.9780), // 서울시청 중심
-                zoom: 16
+                center: new naver.maps.LatLng(37.541, 126.986), 
+                zoom: 11
             });
 
-            // 지적편집도 레이어 추가 (연구용 핵심 기능)
+            // 2. 지적편집도 레이어 추가
             var cadastralLayer = new naver.maps.CadastralLayer();
             cadastralLayer.setMap(map);
 
-            // 연구 대상지 마커 (남현동 예시)
-            var marker = new naver.maps.Marker({
-                position: new naver.maps.LatLng(37.4765, 126.9816),
-                map: map
+            // 3. 68개 지구단위계획구역 GeoJSON 로드
+            // 같은 폴더에 파일이 있어야 합니다.
+            map.data.loadGeoJson('./Seoul_Planning_68.geojson');
+
+            // 4. 구역 스타일 설정 (연구용으로 보기 좋게 반투명 처리)
+            map.data.setStyle(function(feature) {
+                return {
+                    fillColor: '#ff5722',      // 구역 내부 색상 (주황색 계열)
+                    fillOpacity: 0.35,         // 투명도
+                    strokeColor: '#ff5722',    // 테두리 색상
+                    strokeWeight: 2,           // 테두리 두께
+                    clickable: true            // 클릭 이벤트 활성화
+                };
             });
 
-            console.log("새로운 인증 방식으로 지도 로드 완료!");
+            // 5. 구역 클릭 시 정보창(InfoWindow) 띄우기
+            var infowindow = new naver.maps.InfoWindow({
+                content: ''
+            });
+
+            map.data.addListener('click', function(e) {
+                var feature = e.feature;
+                var districtName = feature.getProperty('DGM_NM'); // 우리가 솎아낸 구역명 필드
+                
+                var contentString = [
+                    '<div style="padding:10px; min-width:150px;">',
+                    '   <h4 style="margin:0 0 5px 0;">지구단위계획구역</h4>',
+                    '   <p style="margin:0;"><b>이름:</b> ' + districtName + '</p>',
+                    '   <p style="font-size:12px; color:#666; margin-top:5px;">※ 관광숙박 특화 용적률 완화 대상</p>',
+                    '</div>'
+                ].join('');
+
+                infowindow.setContent(contentString);
+                infowindow.open(map, e.coord);
+            });
+
+            // 6. 연구 대상지 마커 (남현동 예시)
+            var marker = new naver.maps.Marker({
+                position: new naver.maps.LatLng(37.4765, 126.9816),
+                map: map,
+                title: "남현동 602-25 (연구 대상지)"
+            });
+
+            console.log("68개 구역 데이터 로드 및 마커 표시 완료!");
         }
 
-        // 인증 실패 시 알림창을 띄워 원인을 파악합니다
         window.navermap_authFailure = function () {
             alert("네이버 지도 인증에 실패했습니다. 콘솔의 주소 설정을 다시 확인해주세요.");
         }
