@@ -9,7 +9,7 @@
         body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
         #map { width: 100%; height: 100vh; }
     </style>
-    <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=105hwwmu52&submodules=cadastral,geocoder&callback=initMap"></script>
+    <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=105hwwmu52&submodules=cadastral&callback=initMap"></script>
 </head>
 <body>
     <div id="map"></div>
@@ -28,7 +28,7 @@
             var cadastralLayer = new naver.maps.CadastralLayer();
             cadastralLayer.setMap(map);
 
-            // 3. 스타일 설정 (데이터가 로드되는 즉시 적용됨)
+            // 3. 스타일 설정 (데이터가 들어오는 즉시 적용되도록 미리 설정)
             map.data.setStyle(function(feature) {
                 return {
                     fillColor: '#ff5722',
@@ -39,10 +39,10 @@
                 };
             });
 
-            // 4. fetch로 데이터 주입 (TypeError 방지)
+            // 4. GitHub에 올린 GeoJSON 파일을 fetch로 로드 (TypeError 방지)
             fetch('./Seoul_Planning_68.geojson')
                 .then(function(response) {
-                    if (!response.ok) throw new Error('파일을 찾을 수 없습니다.');
+                    if (!response.ok) throw new Error('파일 로드 실패: ' + response.status);
                     return response.json();
                 })
                 .then(function(json) {
@@ -50,10 +50,10 @@
                     console.log("데이터 주입 성공: 율곡로, 사당, 청량리 포함");
                 })
                 .catch(function(error) {
-                    console.error("데이터 로드 에러:", error);
+                    console.error("데이터 로딩 중 에러:", error);
                 });
 
-            // 5. 클릭 정보창 설정
+            // 5. 클릭 정보창 및 이벤트 설정
             var infowindow = new naver.maps.InfoWindow({ content: '' });
 
             map.data.addListener('click', function(e) {
@@ -64,6 +64,7 @@
                     '<div style="padding:10px; min-width:150px;">',
                     '   <h4 style="margin:0 0 5px 0; color:#ff5722;">지구단위계획구역</h4>',
                     '   <p style="margin:0;"><b>이름:</b> ' + districtName + '</p>',
+                    '   <p style="font-size:11px; color:#666; margin-top:5px;">※ 관광숙박 특화 인센티브 대상</p>',
                     '</div>'
                 ].join('');
 
@@ -80,7 +81,7 @@
         }
 
         window.navermap_authFailure = function () {
-            alert("네이버 지도 인증 실패!");
+            alert("네이버 지도 인증 실패! Client ID와 서비스 URL을 확인하세요.");
         }
     </script>
 </body>
