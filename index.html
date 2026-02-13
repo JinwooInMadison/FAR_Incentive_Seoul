@@ -9,43 +9,14 @@
         body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: 'Malgun Gothic', sans-serif; }
         #map { width: 100%; height: 100vh; position: relative; z-index: 0; }
         
-        /* 주소 검색바 스타일 */
-       .search-container {
+        /* 주소 검색바 스타일 설정 */
+        .search-container {
             position: absolute; top: 20px; left: 20px; z-index: 100;
             background: white; padding: 10px; border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2); display: flex; gap: 5px;
         }
         #address-input { width: 250px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; outline: none; }
         #search-btn { padding: 8px 15px; background: #ff5722; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-
-        /* 법령 확인 버튼 (우측 상단) */
-        #openLawBtn {
-            position: absolute; top: 20px; right: 20px; z-index: 100;
-            padding: 12px 20px; background-color: #2c3e50; color: white; 
-            border: none; border-radius: 8px; cursor: pointer; font-weight: bold;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        }
-
-        /* 팝업(모달) 스타일 */
-       .modal {
-            display: none; position: fixed; z-index: 10000; left: 0; top: 0;
-            width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.7);
-        }
-       .modal-content {
-            background-color: #f4f7f6; margin: 3% auto; padding: 0; border: none;
-            width: 90%; max-width: 800px; border-radius: 12px; box-shadow: 0 5px 30px rgba(0,0,0,0.3);
-        }
-       .modal-header { background-color: #2c3e50; padding: 15px 25px; border-radius: 12px 12px 0 0; }
-       .close-btn { color: #fff; float: right; font-size: 30px; font-weight: bold; cursor: pointer; }
-       .modal-body { padding: 25px; max-height: 70vh; overflow-y: auto; color: #333; }
-       .law-section { margin-bottom: 25px; }
-       .section-title { font-size: 17px; color: #2c3e50; border-left: 5px solid #3498db; padding-left: 10px; margin-bottom: 12px; font-weight: bold; }
-       .law-text { background: #fff; padding: 12px; border: 1px solid #dee2e6; border-radius: 6px; line-height: 1.7; font-size: 14px; }
-       .law-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; background: #fff; text-align: center; }
-       .law-table th,.law-table td { border: 1px solid #e0e0e0; padding: 10px; font-size: 13px; }
-       .law-table th { background-color: #f8f9fa; }
-       .highlight-box { background-color: #fff3cd; border: 1px solid #ffeeba; padding: 12px; border-radius: 6px; color: #856404; font-size: 14px; }
-       .deadline { color: #e74c3c; font-weight: bold; }
     </style>
     <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=105hwwmu52&submodules=cadastral,geocoder&callback=initMap"></script>
 </head>
@@ -56,148 +27,109 @@
         <button id="search-btn">검색</button>
     </div>
 
-    <button id="openLawBtn">법령 및 인센티브 확인</button>
-
     <div id="map"></div>
-
-    <div id="lawModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <span class="close-btn">&times;</span>
-                <h2 style="margin: 0; color: #fff; font-size: 18px;">서울특별시 도시계획 조례 및 인센티브 법령</h2>
-            </div>
-            <div class="modal-body">
-                <section class="law-section">
-                    <h3 class="section-title">관광숙박 특화구역 내 건축 규제 완화</h3>
-                    <table class="law-table">
-                        <tr><th>완화 사항</th><th>완화 범위 (인센티브)</th></tr>
-                        <tr><td><b>건폐율</b></td><td>「국토계획법 시행령」 제46조제4항 허용 범위 이내</td></tr>
-                        <tr><td><b>높이</b></td><td>지구단위계획 결정 <b>최고높이의 1.3배</b> 이내</td></tr>
-                        <tr><td><b>최대개발규모</b></td><td>지구단위계획 결정 <b>최대개발규모 미적용</b></td></tr>
-                    </table>
-                    <div class="highlight-box">
-                        <b>💡 모텔 전환 특례:</b> 기존 모텔을 관광숙박시설로 개발 시 <b>건폐율과 높이의 중복 적용 가능</b>
-                    </div>
-                </section>
-
-                <section class="law-section">
-                    <h3 class="section-title">서울특별시 도시계획 조례 제51조 (용적률의 완화)</h3>
-                    <div class="law-text">
-                        <p><b>제1호 다목:</b> 관광호텔, 가족호텔, 호스텔업 시설 건축 시 해당 용도지역 용적률의 120% 이하. <b>(단, 관광숙박 특화구역은 130% 이하 범위까지 완화)</b></p>
-                        <p><b>제1호 사목 (도심 특례):</b></p>
-                        <ul>
-                            <li>서울도심 외 지역: 해당 용도지역 용적률의 <b>130% 이하</b></li>
-                            <li>서울도심 지역: 서울도심 외 용적률(800%)의 <b>130% 이하 (최대 1,040%)</b></li>
-                        </ul>
-                    </div>
-                </section>
-
-                <section class="law-section">
-                    <h3 class="section-title">조례 제48조 (기본 용적률 상한)</h3>
-                    <table class="law-table">
-                        <tr><th>용도지역 구분</th><th>서울도심 외</th><th>서울도심 내</th></tr>
-                        <tr><td>일반상업지역</td><td>800%</td><td>600% (인센티브 시 1,040%)</td></tr>
-                        <tr><td>근린상업지역</td><td>600%</td><td>500% (인센티브 시 780%)</td></tr>
-                    </table>
-                </section>
-
-                <p style="text-align: center; font-size: 14px; color: #666; border-top: 1px dashed #ccc; padding-top: 15px;">
-                    📅 유효기간: <span class="deadline">2029년 1월 4일</span> 건축허가 신청분까지 적용
-                </p>
-            </div>
-        </div>
-    </div>
 
     <script type="text/javascript">
         var map = null;
         var infoWindow = null;
         var searchMarker = null;
 
+        // [함수] 지도 초기화 및 데이터 로드 시작
         function initMap() {
-            // 1. 지도 초기화
+            // 1. 지도 초기화: 지도의 중심점과 줌 레벨을 설정하여 지도를 생성합니다.
             map = new naver.maps.Map('map', {
-                center: new naver.maps.LatLng(37.541, 126.986),
-                zoom: 13
+                center: new naver.maps.LatLng(37.541, 126.986), // 서울 중심부 좌표
+                zoom: 13 // 광역적으로 보이게 13레벨로 시작
             });
 
-            // 2. 지적편집도 레이어 추가
+            // 2. 지적편집도 레이어 추가: 토지 필지 경계선을 보여주는 레이어를 지도 위에 겹칩니다.
             var cadastralLayer = new naver.maps.CadastralLayer();
             cadastralLayer.setMap(map);
 
-            // 3. 구역 스타일 설정 (63개 구역)
+            // 3. 구역 스타일 설정: GeoJSON 데이터(63개 구역)를 어떤 색과 투명도로 그릴지 정합니다.
             map.data.setStyle(function(feature) {
                 return {
-                    fillColor: '#ff5722', fillOpacity: 0.20,
-                    strokeColor: '#ff5722', strokeWeight: 1.5, clickable: true
+                    fillColor: '#ff5722',   // 주황색 채우기
+                    fillOpacity: 0.20,      // 투명도 (0.20로 설정해 지적도가 잘 보이게 함)
+                    strokeColor: '#ff5722', // 테두리 주황색
+                    strokeWeight: 1.5,      // 테두리 두께
+                    clickable: true         // 마우스 클릭 이벤트 허용
                 };
             });
 
-            // 4. GeoJSON 데이터 로드
+            // 4. GeoJSON 데이터 주입: GitHub에 업로드한 63개 구역 파일을 비동기(fetch)로 가져옵니다.
             fetch('./Seoul_Planning_63.geojson')
-              .then(res => res.json())
-              .then(json => { map.data.addGeoJson(json); console.log("63개 구역 로드 완료"); })
-              .catch(err => console.error("GeoJSON 로드 실패:", err));
+                .then(res => res.json())
+                .then(json => { 
+                    map.data.addGeoJson(json); 
+                    console.log("63개 구역 데이터 로드 완료");
+                })
+                .catch(err => console.error("데이터 로드 중 에러 발생:", err));
 
-            // 5. 정보창 객체 생성
+            // 5. 정보창 객체 생성: 구역 클릭 시 이름을 보여주기 위한 말풍선입니다.
             infoWindow = new naver.maps.InfoWindow({
-                content: '', backgroundColor: "#fff", borderColor: "#ff5722", borderWidth: 2
+                content: '',
+                backgroundColor: "#fff",
+                borderColor: "#ff5722",
+                borderWidth: 2
             });
 
-            // 6. 구역 클릭 이벤트
+            // 6. 클릭 이벤트 리스너: 지도 위 주황색 구역을 클릭했을 때의 동작입니다.
             map.data.addListener('click', function(e) {
-                var name = e.feature.getProperty('DGM_NM');
+                var name = e.feature.getProperty('DGM_NM'); // GeoJSON 데이터 내 'DGM_NM' 필드값 가져오기
                 infoWindow.setContent('<div style="padding:10px; font-size:13px;"><b>구역명:</b> ' + name + '</div>');
-                infoWindow.open(map, e.coord);
+                infoWindow.open(map, e.coord); // 클릭한 위치에 말풍선 열기
             });
 
-            // 7. 주소 검색 기능 (인덱스  복구 완료)
+            // 7. 주소 검색 기능 함수: 입력한 주소를 좌표로 바꿔 지도 위치를 옮깁니다.
             function searchAddress() {
                 var address = document.getElementById('address-input').value;
                 if (!address) return alert('주소를 입력해주세요.');
 
+                // 네이버 지오코딩 서비스(geocode) 이용
                 naver.maps.Service.geocode({ query: address }, function(status, response) {
-                    if (status!== naver.maps.Service.Status.OK) return alert('검색 결과가 없습니다.');
+                    if (status !== naver.maps.Service.Status.OK) return alert('검색 결과가 없습니다.');
 
-                    // [수정 포인트] 결과 배열의 첫 번째 항목(v2.addresses)을 정확히 참조하도록 수정
-                    var result = response.v2.addresses; 
-                    var coords = new naver.maps.LatLng(result.y, result.x);
+                    var result = response.v2.addresses[0]; // 검색 결과 첫 번째 항목
+                    var coords = new naver.maps.LatLng(result.y, result.x); // 좌표 생성
 
-                    // 기존 핀 제거
+                    // 이전 검색 핀(Marker)이 있다면 지도에서 지우기
                     if (searchMarker) searchMarker.setMap(null);
-
-                    // 지도 이동 및 확대
+                    
+                    // 지도 중심을 검색 위치로 이동하고, 상세 확인을 위해 18레벨로 확대
                     map.setCenter(coords);
-                    map.setZoom(18);
+                    map.setZoom(18); 
 
-                    // 새로운 핀 생성
+                    // 검색 위치에 핀(Marker) 표시
                     searchMarker = new naver.maps.Marker({
                         position: coords,
                         map: map,
-                        animation: naver.maps.Animation.DROP
+                        animation: naver.maps.Animation.DROP // 핀이 위에서 툭 떨어지는 효과
                     });
+                    
+                    // [공부포인트] infoWindow.open 코드가 없으므로 핀 위를 가리는 설명창은 나타나지 않습니다.
                 });
             }
 
-            // 8. 지도 빈 공간 클릭 시 초기화
-            naver.maps.Event.addListener(map, 'click', function() {
-                if (searchMarker) { searchMarker.setMap(null); searchMarker = null; }
-                if (infoWindow) infoWindow.close();
-            });
+            // 8. 지도 빈 공간 클릭 시 이벤트: 기존 핀과 정보창을 닫습니다.
+naver.maps.Event.addListener(map, 'click', function(e) {
+    // 1) 주소 검색으로 생성된 핀(Marker) 제거
+    if (searchMarker) {
+        searchMarker.setMap(null);
+        searchMarker = null; // 변수 초기화
+    }
 
-            // 이벤트 리스너 연결
+    // 2) 구역 클릭으로 열려있던 정보창(InfoWindow) 닫기
+    if (infoWindow) {
+        infoWindow.close();
+    }
+});
+
+            // [이벤트 연결] 검색 버튼 클릭 및 엔터키 입력 시 검색 함수 실행
             document.getElementById('search-btn').addEventListener('click', searchAddress);
             document.getElementById('address-input').addEventListener('keydown', function(e) {
                 if(e.keyCode === 13) searchAddress();
             });
-
-            // 팝업 제어 스크립트
-            const modal = document.getElementById("lawModal");
-            const btn = document.getElementById("openLawBtn");
-            const closeBtn = document.querySelector(".close-btn");
-
-            btn.onclick = () => modal.style.display = "block";
-            closeBtn.onclick = () => modal.style.display = "none";
-            window.onclick = (e) => { if (e.target == modal) modal.style.display = "none"; }
         }
     </script>
 </body>
