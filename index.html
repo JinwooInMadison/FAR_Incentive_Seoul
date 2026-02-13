@@ -46,7 +46,7 @@
             var cadastralLayer = new naver.maps.CadastralLayer();
             cadastralLayer.setMap(map);
 
-            // 3. 구역 스타일 설정: GeoJSON 데이터(68개 구역)를 어떤 색과 투명도로 그릴지 정합니다.
+            // 3. 구역 스타일 설정: GeoJSON 데이터(63개 구역)를 어떤 색과 투명도로 그릴지 정합니다.
             map.data.setStyle(function(feature) {
                 return {
                     fillColor: '#ff5722',   // 주황색 채우기
@@ -58,11 +58,11 @@
             });
 
             // 4. GeoJSON 데이터 주입: GitHub에 업로드한 68개 구역 파일을 비동기(fetch)로 가져옵니다.
-            fetch('./Seoul_Planning_68.geojson')
+            fetch('./Seoul_Planning_63.geojson')
                 .then(res => res.json())
                 .then(json => { 
                     map.data.addGeoJson(json); 
-                    console.log("68개 구역 데이터 로드 완료");
+                    console.log("63개 구역 데이터 로드 완료");
                 })
                 .catch(err => console.error("데이터 로드 중 에러 발생:", err));
 
