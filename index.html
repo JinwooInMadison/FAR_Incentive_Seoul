@@ -10,7 +10,7 @@
         #map { width: 100%; height: 100vh; position: relative; z-index: 0; }
         
         /* UI 레이아웃 스타일 */
-       .search-container {
+        .search-container {
             position: absolute; top: 20px; left: 20px; z-index: 100;
             background: white; padding: 10px; border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2); display: flex; gap: 5px;
@@ -25,21 +25,21 @@
         }
 
         /* 팝업 모달 스타일 */
-       .modal { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); }
-       .modal-content { background-color: #f4f7f6; margin: 3% auto; padding: 0; width: 90%; max-width: 800px; border-radius: 12px; box-shadow: 0 5px 30px rgba(0,0,0,0.3); position: relative; }
-       .modal-header { background-color: #2c3e50; padding: 15px 25px; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center; }
-       .close-btn { color: #fff; font-size: 30px; font-weight: bold; cursor: pointer; }
-       .modal-body { padding: 25px; max-height: 70vh; overflow-y: auto; color: #333; line-height: 1.6; }
-       .law-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; background: #fff; text-align: center; }
-       .law-table th,.law-table td { border: 1px solid #e0e0e0; padding: 10px; font-size: 13px; }
-       .highlight-box { background-color: #fff3cd; border: 1px solid #ffeeba; padding: 12px; border-radius: 6px; color: #856404; font-size: 14px; }
+        .modal { display: none; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.7); }
+        .modal-content { background-color: #f4f7f6; margin: 3% auto; padding: 0; width: 90%; max-width: 800px; border-radius: 12px; box-shadow: 0 5px 30px rgba(0,0,0,0.3); position: relative; }
+        .modal-header { background-color: #2c3e50; padding: 15px 25px; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center; }
+        .close-btn { color: #fff; font-size: 30px; font-weight: bold; cursor: pointer; }
+        .modal-body { padding: 25px; max-height: 70vh; overflow-y: auto; color: #333; line-height: 1.6; }
+        .law-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; background: #fff; text-align: center; }
+        .law-table th, .law-table td { border: 1px solid #e0e0e0; padding: 10px; font-size: 13px; }
+        .highlight-box { background-color: #fff3cd; border: 1px solid #ffeeba; padding: 12px; border-radius: 6px; color: #856404; font-size: 14px; }
 
         /* 말풍선 정보창 스타일 */
-       .info-box { padding: 10px; min-width: 220px; line-height: 1.5; font-size: 13px; }
-       .info-title { font-weight: bold; color: #ff5722; margin-bottom: 5px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-       .badge { display: inline-block; background: #e74c3c; color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-top: 5px; }
+        .info-box { padding: 10px; min-width: 220px; line-height: 1.5; font-size: 13px; }
+        .info-title { font-weight: bold; color: #ff5722; margin-bottom: 5px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        .badge { display: inline-block; background: #e74c3c; color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-top: 5px; }
     </style>
-    <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=105hwwmu52&submodules=cadastral,geocoder&callback=initMap"></script>
+    <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=105hwwmu52&submodules=geocoder,cadastral"></script>
 </head>
 <body>
 
@@ -74,7 +74,7 @@
                     <b>서울도심 지역</b>은 기존 용적률 규제에도 불구하고, 도심 외 지역 기준(800%)의 130%인 <b>최대 1,040%</b>를 적용받습니다.
                 </p>
                 <p style="text-align: center; color: #e74c3c; font-weight: bold; font-size: 14px; margin-top: 20px; border-top: 1px dashed #ccc; padding-top: 15px;">
-                    📅 유효기간: 2029년 1월 4일 신청분까지 [2]
+                    📅 유효기간: 2029년 1월 4일 신청분까지
                 </p>
             </div>
         </div>
@@ -89,15 +89,15 @@
         function initMap() {
             // 1. 지도 초기화
             map = new naver.maps.Map('map', {
-                center: new naver.maps.LatLng(37.573, 127.002), // 효제동 중심
-                zoom: 14
+                center: new naver.maps.LatLng(37.573, 127.002), 
+                zoom: 16
             });
 
             // 2. 지적편집도 레이어
             var cadastralLayer = new naver.maps.CadastralLayer();
             cadastralLayer.setMap(map);
 
-            // 3. 63개 특화구역 스타일
+            // 3. GeoJSON 스타일 설정
             map.data.setStyle(function(feature) {
                 return { fillColor: '#ff5722', fillOpacity: 0.20, strokeColor: '#ff5722', strokeWeight: 1.5, clickable: true };
             });
@@ -106,78 +106,79 @@
             fetch('./Seoul_Planning_63.geojson')
             .then(res => res.json())
             .then(json => { map.data.addGeoJson(json); })
-            .catch(err => console.warn("GeoJSON 로드 실패. 파일 경로를 확인하세요."));
+            .catch(err => console.warn("GeoJSON 파일이 없거나 경로가 틀립니다."));
 
             infoWindow = new naver.maps.InfoWindow({ content: '', backgroundColor: "#fff", borderColor: "#ff5722", borderWidth: 2 });
 
-            // 5. 구역 클릭 이벤트
+            // 5. 구역 클릭 이벤트 (오타 수정됨)
             map.data.addListener('click', function(e) {
-                var name = e.feature.getProperty('DGM_NM') |
-
-| "관광숙박 특화구역";
+                var name = e.feature.getProperty('DGM_NM') || "관광숙박 특화구역";
                 infoWindow.setContent('<div class="info-box"><div class="info-title">지정 구역 정보</div>' + name + '</div>');
                 infoWindow.open(map, e.coord);
             });
 
-            // 6. 주소 검색 및 용도지역 조회 (인덱스  오류 수정 완료)
-            function searchAddress() {
+            // 6. 주소 검색 함수 (전체 수정)
+            window.searchAddress = function() {
                 var address = document.getElementById('address-input').value;
                 if (!address) return alert('주소를 입력해주세요.');
 
                 naver.maps.Service.geocode({ query: address }, function(status, response) {
-                    if (status!== naver.maps.Service.Status.OK |
-
-| response.v2.addresses.length === 0) {
+                    if (status !== naver.maps.Service.Status.OK || response.v2.addresses.length === 0) {
                         return alert('검색 결과가 없습니다.');
                     }
 
-                    var item = response.v2.addresses; // [수정] 배열 첫 번째 항목 지정
+                    var item = response.v2.addresses[0]; // [수정] 배열의 첫 번째 항목 사용
                     var coords = new naver.maps.LatLng(item.y, item.x);
 
-                    // 브이월드 API로 용도지역 실시간 조회
+                    // 브이월드 API 조회
                     var vworldUrl = `https://api.vworld.kr/req/data?service=data&request=GetFeature&data=LT_C_UQ111&key=${vworldKey}&geomFilter=POINT(${item.x} ${item.y})&crs=EPSG:4326`;
 
                     fetch(vworldUrl)
                     .then(res => res.json())
                     .then(data => {
-                            var zoning = "조회 실패";
-                            var far = "대상 구역 확인 필요";
-                            if(data.response && data.response.status === "OK") {
-                                zoning = data.response.result.featureCollection.features.properties.unm;
-                                if(zoning.includes("일반상업")) far = "800% → 1,040%";
-                                else if(zoning.includes("근린상업")) far = "600% → 780%";
-                            }
+                        var zoning = "조회 실패";
+                        var far = "대상 구역 확인 필요";
+                        
+                        if(data.response && data.response.status === "OK" && data.response.result) {
+                            var props = data.response.result.featureCollection.features[0].properties;
+                            zoning = props.unm || "정보 없음";
+                            if(zoning.includes("일반상업")) far = "800% → 1,040%";
+                            else if(zoning.includes("근린상업")) far = "600% → 780%";
+                        }
 
-                            if (searchMarker) searchMarker.setMap(null);
-                            map.setCenter(coords);
-                            map.setZoom(18);
-                            searchMarker = new naver.maps.Marker({ position: coords, map: map, animation: 2 });
+                        if (searchMarker) searchMarker.setMap(null);
+                        map.setCenter(coords);
+                        map.setZoom(18);
+                        searchMarker = new naver.maps.Marker({ position: coords, map: map, animation: 2 });
 
-                            infoWindow.setContent(`
-                                <div class="info-box">
-                                    <div class="info-title">검색 필지 분석</div>
-                                    <b>주소:</b> ${item.roadAddress |
-
-| item.jibunAddress}<br>
-                                    <b>용도지역:</b> <span style="color:#2980b9; font-weight:bold;">${zoning}</span><br>
-                                    <b>예상 인센티브:</b> <div class="badge">${far}</div>
-                                </div>
-                            `);
-                            infoWindow.open(map, coords);
-                        });
+                        var addrDisplay = item.roadAddress || item.jibunAddress;
+                        infoWindow.setContent(`
+                            <div class="info-box">
+                                <div class="info-title">검색 필지 분석</div>
+                                <b>주소:</b> ${addrDisplay}<br>
+                                <b>용도지역:</b> <span style="color:#2980b9; font-weight:bold;">${zoning}</span><br>
+                                <b>예상 인센티브:</b> <div class="badge">${far}</div>
+                            </div>
+                        `);
+                        infoWindow.open(map, coords);
+                    })
+                    .catch(err => console.error("브이월드 API 오류"));
                 });
             }
 
-            // 버튼 및 엔터키 이벤트 연결
+            // 이벤트 연결
             document.getElementById('search-btn').onclick = searchAddress;
             document.getElementById('address-input').onkeydown = e => { if(e.keyCode === 13) searchAddress(); };
             
-            // 팝업 제어 스크립트
+            // 모달 제어
             const modal = document.getElementById("lawModal");
             document.getElementById("openLawBtn").onclick = () => modal.style.display = "block";
             document.querySelector(".close-btn").onclick = () => modal.style.display = "none";
             window.onclick = (e) => { if (e.target == modal) modal.style.display = "none"; }
         }
+
+        // 페이지 로드 시 실행
+        window.onload = initMap;
     </script>
 </body>
 </html>
