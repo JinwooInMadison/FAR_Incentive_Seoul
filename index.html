@@ -33,7 +33,7 @@
         .info-title { font-weight: bold; color: #ff5722; margin-bottom: 5px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
         .badge { display: inline-block; background: #e74c3c; color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-top: 5px; }
     </style>
-    <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=105hwwmu52&submodules=cadastral,geocoder"></script>
+    <script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=105hwwmu52&submodules=geocoder,cadastral"></script>
 </head>
 <body>
 
@@ -61,13 +61,6 @@
                     <tr><td>최대개발규모</td><td>미적용 (대규모 합필 가능)</td></tr>
                 </table>
                 <div class="highlight-box">💡 <b>모텔 전환 특례:</b> 기존 모텔을 전환 시 건폐율과 높이 <b>중복 완화</b> 가능</div>
-                <h3 style="font-size: 16px; border-left: 5px solid #3498db; padding-left: 10px; margin-top: 20px;">2. 조례 제51조 사목 (도심 특례)</h3>
-                <p style="background:#fff; padding:12px; border:1px solid #ddd; border-radius:6px; font-size:13px;">
-                    <b>서울도심 지역</b>은 기존 용적률 규제에도 불구하고, 도심 외 지역 기준(800%)의 130%인 <b>최대 1,040%</b>를 적용받습니다.
-                </p>
-                <p style="text-align: center; color: #e74c3c; font-weight: bold; font-size: 14px; margin-top: 20px; border-top: 1px dashed #ccc; padding-top: 15px;">
-                    📅 유효기간: 2029년 1월 4일 신청분까지
-                </p>
             </div>
         </div>
     </div>
@@ -81,7 +74,7 @@
         function initMap() {
             map = new naver.maps.Map('map', {
                 center: new naver.maps.LatLng(37.573, 127.002), 
-                zoom: 15
+                zoom: 16
             });
 
             var cadastralLayer = new naver.maps.CadastralLayer();
@@ -104,6 +97,7 @@
                 infoWindow.open(map, e.coord);
             });
 
+            // 주소 검색 함수
             window.searchAddress = function() {
                 var address = document.getElementById('address-input').value;
                 if (!address) return alert('주소를 입력해주세요.');
@@ -123,12 +117,10 @@
                     .then(data => {
                         var zoning = "조회 실패";
                         var far = "대상 구역 확인 필요";
-                        
                         if(data.response && data.response.status === "OK" && data.response.result) {
                             var props = data.response.result.featureCollection.features[0].properties;
                             zoning = props.unm || "정보 없음";
                             if(zoning.includes("일반상업")) far = "800% → 1,040%";
-                            else if(zoning.includes("근린상업")) far = "600% → 780%";
                         }
 
                         if (searchMarker) searchMarker.setMap(null);
@@ -136,15 +128,7 @@
                         map.setZoom(18);
                         searchMarker = new naver.maps.Marker({ position: coords, map: map, animation: 2 });
 
-                        var addrDisplay = item.roadAddress || item.jibunAddress;
-                        infoWindow.setContent(
-                            '<div class="info-box">' +
-                                '<div class="info-title">검색 필지 분석</div>' +
-                                '<b>주소:</b> ' + addrDisplay + '<br>' +
-                                '<b>용도지역:</b> <span style="color:#2980b9; font-weight:bold;">' + zoning + '</span><br>' +
-                                '<b>예상 인센티브:</b> <div class="badge">' + far + '</div>' +
-                            '</div>'
-                        );
+                        infoWindow.setContent('<div class="info-box"><div class="info-title">검색 필지 분석</div><b>주소:</b> ' + (item.roadAddress || item.jibunAddress) + '<br><b>용도지역:</b> ' + zoning + '<br><div class="badge">' + far + '</div></div>');
                         infoWindow.open(map, coords);
                     });
                 });
@@ -156,7 +140,6 @@
             const modal = document.getElementById("lawModal");
             document.getElementById("openLawBtn").onclick = function() { modal.style.display = "block"; };
             document.querySelector(".close-btn").onclick = function() { modal.style.display = "none"; };
-            window.onclick = function(e) { if (e.target == modal) modal.style.display = "none"; };
         }
 
         window.onload = initMap;
