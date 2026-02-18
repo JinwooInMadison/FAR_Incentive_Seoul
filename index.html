@@ -81,33 +81,84 @@
                 infoWindow.open(map, e.coord); // 클릭한 위치에 말풍선 열기
             });
 
-            // 7. 주소 검색 기능 함수: 입력한 주소를 좌표로 바꿔 지도 위치를 옮깁니다.
+// 7. 주소 검색 기능 함수: 입력한 주소를 좌표로 바꿔 지도 위치를 옮기고 용도지역 정보도 표시합니다.
             function searchAddress() {
                 var address = document.getElementById('address-input').value;
                 if (!address) return alert('주소를 입력해주세요.');
 
                 // 네이버 지오코딩 서비스(geocode) 이용
                 naver.maps.Service.geocode({ query: address }, function(status, response) {
-                    if (status !== naver.maps.Service.Status.OK) return alert('검색 결과가 없습니다.');
+                    if (status!== naver.maps.Service.Status.OK |
 
-                    var result = response.v2.addresses[0]; // 검색 결과 첫 번째 항목
+| response.v2.addresses.length === 0) {
+                        return alert('검색 결과가 없습니다.');
+                    }
+
+                    var result = response.v2.addresses; // 검색 결과 첫 번째 항목
                     var coords = new naver.maps.LatLng(result.y, result.x); // 좌표 생성
+                    var vworldKey = "AA847E08-3E79-3FB3-B8EF-FCDDC23BDBEE"; // 제공해주신 인증키
 
-                    // 이전 검색 핀(Marker)이 있다면 지도에서 지우기
-                    if (searchMarker) searchMarker.setMap(null);
-                    
-                    // 지도 중심을 검색 위치로 이동하고, 상세 확인을 위해 18레벨로 확대
-                    map.setCenter(coords);
-                    map.setZoom(18); 
+                    // 브이월드 Data API를 통해 해당 좌표의 '용도지역' 정보를 가져옵니다. (레이어: LT_C_UQ111)
+                    var vworldUrl = `https://api.vworld.kr/req/data?service=data&request=GetFeature&data=LT_C_UQ111&key=${vworldKey}&geomFilter=POINT(${result.x} ${result.y})&crs=EPSG:4326`;
 
-                    // 검색 위치에 핀(Marker) 표시
-                    searchMarker = new naver.maps.Marker({
-                        position: coords,
-                        map: map,
-                        animation: naver.maps.Animation.DROP // 핀이 위에서 툭 떨어지는 효과
-                    });
-                    
-                    // [공부포인트] infoWindow.open 코드가 없으므로 핀 위를 가리는 설명창은 나타나지 않습니다.
+                    fetch(vworldUrl)
+                       .then(res => res.json())
+                       .then(data => {
+                            var zoningName = "조회 정보 없음";
+                            var farIncentive = "대상 구역 확인 필요";
+
+                            if(data.response && data.response.status === "OK") {
+                                // 용도지역 명칭(unm) 추출
+                                zoningName = data.response.result.featureCollection.features.properties.unm;
+                                
+                                // 서울시 도시계획 조례 제51조제2항제1호 사목에 따른 인센티브 자동 매칭 
+                                if(zoningName.includes("일반상업")) farIncentive = "800% → 1,040% (1.3배)";
+                                else if(zoningName.includes("근린상업")) farIncentive = "600% → 780% (1.3배)";
+                                else if(zoningName.includes("중심상업")) farIncentive = "1,000% → 1,300% (1.3배)";
+                                else farIncentive = "특례 대상 여부 확인 필요";
+                            }
+
+                            // 1) 이전 검색 핀(Marker) 제거 및 지도 이동
+                            if (searchMarker) searchMarker.setMap(null);
+                            map.setCenter(coords);
+                            map.setZoom(18); // 지적도가 잘 보이도록 18레벨로 확대
+
+                            // 2) 검색 위치에 핀(Marker) 표시
+                            searchMarker = new naver.maps.Marker({
+                                position: coords,
+                                map: map,
+                                animation: naver.maps.Animation.DROP
+                            });
+
+                            // 3) 정보창(InfoWindow) 표시: 용도지역 및 인센티브 정보 포함
+                            var content = `
+                                <div style="padding:15px; min-width:240px; line-height:1.6; font-family: 'Malgun Gothic', sans-serif;">
+                                    <div style="font-weight:bold; color:#ff5722; border-bottom:1px solid #eee; padding-bottom:5px; margin-bottom:10px; font-size:14px;">검색지 분석 정보</div>
+                                    <div style="font-size:13px; color:#333;">
+                                        <b>주소:</b> ${result.roadAddress |
+
+| result.jibunAddress}<br>
+                                        <b>용도지역:</b> <span style="color:#2980b9; font-weight:bold;">${zoningName}</span><br>
+                                        <b>특화 인센티브:</b> <span style="display:inline-block; background:#e74c3c; color:#fff; padding:2px 8px; border-radius:4px; font-weight:bold; font-size:12px; margin-top:5px;">${farIncentive}</span>
+                                    </div>
+                                    <p style="margin-top:10px; font-size:11px; color:#666;">※ 주황색 구역 내 위치 시 2029년 1월 4일까지 혜택 적용 </p>
+                                </div>`;
+                            
+                            infoWindow.setContent(content);
+                            infoWindow.open(map, coords);
+                        })
+                       .catch(err => {
+                            console.error("공간정보 조회 에러:", err);
+                            // 조회 실패 시에도 기본 이동 및 핀 생성은 수행
+                            if (searchMarker) searchMarker.setMap(null);
+                            map.setCenter(coords);
+                            map.setZoom(18);
+                            searchMarker = new naver.maps.Marker({ position: coords, map: map });
+                            infoWindow.setContent('<div style="padding:10px;">주소: ' + (result.roadAddress |
+
+| result.jibunAddress) + '</div>');
+                            infoWindow.open(map, coords);
+                        });
                 });
             }
 
